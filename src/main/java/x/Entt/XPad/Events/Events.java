@@ -4,153 +4,162 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.util.Vector;
-
-import x.Entt.XPad.Utils.UpdateLogger;
-import x.Entt.XPad.XPad;
+import x.Entt.XPad.XP;
 import x.Entt.XPad.Utils.MSG;
 
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
-import static x.Entt.XPad.XPad.econ;
-import static x.Entt.XPad.XPad.prefix;
+import static x.Entt.XPad.XP.econ;
 
 public class Events implements Listener {
-    private final XPad plugin;
+    private final XP plugin;
+    private final Map<Player, Boolean> playerUsingPad = new HashMap<>();
 
-    public Events(XPad instance) {
+    public Events(XP instance) {
         this.plugin = instance;
     }
 
-    private static boolean plateWarn = false;
-    private static boolean blockWarn = false;
-    private static boolean lowSpeedWarn = false;
-    private static boolean highSpeedWarn = false;
-    private static boolean effectWarn = false;
+    private static boolean plateWarn, blockWarn, lowSpeedWarn, highSpeedWarn, effectWarn;
 
     @EventHandler
     public void onPlayerMove(PlayerMoveEvent event) {
         Player player = event.getPlayer();
+        if (!isPlayerInValidWorld(player)) return;
+
         Location loc = player.getLocation();
-        String plateName = plugin.getConfig().getString("launch-plate");
-        assert plateName != null;
-        boolean isPlate = plateName.toLowerCase().contains("plate");
-        Material cfgPlate = Material.matchMaterial(plateName);
-        Material cfgBlock = Material.matchMaterial(Objects.requireNonNull(plugin.getConfig().getString("bottom-block")));
+        Material cfgPlate = getMaterialOrDefault("launch-plate", Material.STONE_PRESSURE_PLATE, plateWarn);
+        Material cfgBlock = getMaterialOrDefault("bottom-block", Material.REDSTONE_BLOCK, blockWarn);
+        boolean isPlate = plugin.getConfig().getString("launch-plate", "").toLowerCase().contains("plate");
+
         Material bottomBlock = Objects.requireNonNull(loc.getWorld()).getBlockAt(loc).getRelative(0, isPlate ? -1 : -2, 0).getType();
         Material plate = loc.getWorld().getBlockAt(loc).getRelative(0, isPlate ? 0 : -1, 0).getType();
+        int speed = getSpeed();
+        Particle effect = getEffect();
+        String direction = plugin.getConfig().getString("direction", "player-view").toLowerCase();
+
+        boolean validBottomBlock = cfgBlock != null ? bottomBlock == cfgBlock : "any".equalsIgnoreCase(plugin.getConfig().getString("bottom-block"));
+        if (player.hasPermission("xpad.launch") && validBottomBlock && plate == cfgPlate) {
+            launchPlayer(player, speed, direction, effect);
+            playerUsingPad.put(player, true);
+        } else {
+            playerUsingPad.put(player, false);
+        }
+    }
+
+    private boolean isPlayerInValidWorld(Player player) {
+        if (!plugin.getConfig().getBoolean("world-list.enabled")) return true;
+
+        List<String> worlds = plugin.getConfig().getStringList("world-list.worlds");
+        String worldName = player.getWorld().getName();
+        String listMode = plugin.getConfig().getString("world-list.list-mode", "whitelist").toLowerCase();
+
+        return listMode.equals("whitelist") == worlds.contains(worldName);
+    }
+
+    private Material getMaterialOrDefault(String configPath, Material defaultMaterial, boolean warnFlag) {
+        String materialName = plugin.getConfig().getString(configPath);
+        if (materialName == null) return defaultMaterial;
+
+        Material material = Material.matchMaterial(materialName);
+        if (material == null) {
+            if (!warnFlag) {
+                plugin.getLogger().warning("Invalid material in config: " + configPath + ". Defaulting to " + defaultMaterial);
+            }
+            return defaultMaterial;
+        }
+        return material;
+    }
+
+    private int getSpeed() {
         int speed = plugin.getConfig().getInt("speed");
-        String effectName = plugin.getConfig().getString("effect");
-        Particle effect = null;
-
-        if (cfgPlate == null) {
-            if (!plateWarn) {
-                plugin.getLogger().warning("The plate config was improperly set. Defaulting to Stone Pressure Plate.");
-                plateWarn = true;
-            }
-            cfgPlate = Material.STONE_PRESSURE_PLATE;
-        }
-
-        if (cfgBlock == null) {
-            if (!blockWarn) {
-                plugin.getLogger().warning("The block config was improperly set. Defaulting to Redstone Block.");
-                blockWarn = true;
-            }
-            cfgBlock = Material.REDSTONE_BLOCK;
-        }
-
         if (speed < 1) {
-            if (!lowSpeedWarn) {
-                plugin.getLogger().warning("The speed was set to a value below 1. Defaulting to 1.");
-                lowSpeedWarn = true;
-            }
-            speed = 1;
+            if (!lowSpeedWarn) plugin.getLogger().warning("Speed below 1. Defaulting to 1.");
+            return 1;
         } else if (speed > 18) {
-            if (!highSpeedWarn) {
-                plugin.getLogger().warning("The speed was set to a value above the maximum of 18. Defaulting to 18.");
-                highSpeedWarn = true;
-            }
-            speed = 18;
+            if (!highSpeedWarn) plugin.getLogger().warning("Speed above 18. Defaulting to 18.");
+            return 18;
         }
+        return speed;
+    }
 
+    private Particle getEffect() {
+        String effectName = plugin.getConfig().getString("effect");
         if (effectName != null) {
             try {
-                effect = Particle.valueOf(effectName);
+                return Particle.valueOf(effectName.toUpperCase());
             } catch (IllegalArgumentException e) {
                 if (!effectWarn) {
-                    plugin.getLogger().warning("The effect config was improperly set or invalid. No effect will be used.");
+                    plugin.getLogger().warning("Invalid effect in config: " + effectName + ". No effect will be used.");
                     effectWarn = true;
                 }
             }
         }
+        return null;
+    }
 
-        if (player.hasPermission("xpad.launch") && bottomBlock == cfgBlock && plate == cfgPlate) {
-            player.setVelocity(player.getLocation().getDirection().multiply(speed));
-            player.setVelocity(new Vector(player.getVelocity().getX(), 1.0D, player.getVelocity().getZ()));
-            String soundName = plugin.getConfig().getString("sound");
-            if (soundName != null) {
-                try {
-                    player.playSound(player.getLocation(), Sound.valueOf(soundName), 1.0F, 1.0F);
-                } catch (IllegalArgumentException e) {
-                    plugin.getLogger().warning("Invalid sound name in config: " + soundName);
-                }
+    private void launchPlayer(Player player, int speed, String direction, Particle effect) {
+        Vector launchVector = direction.equals("player-view")
+                ? player.getLocation().getDirection().multiply(speed)
+                : new Vector(0, 1, 0).multiply(speed);
+
+        player.setVelocity(launchVector);
+        playSound(player);
+        if (effect != null) player.getWorld().spawnParticle(effect, player.getLocation(), 100);
+        sendActions(player);
+    }
+
+    private void playSound(Player player) {
+        String soundName = plugin.getConfig().getString("sound");
+        if (soundName != null) {
+            try {
+                player.playSound(player.getLocation(), Sound.valueOf(soundName.toUpperCase()), 1.0F, 1.0F);
+            } catch (IllegalArgumentException e) {
+                plugin.getLogger().warning("Invalid sound name in config: " + soundName);
             }
+        }
+    }
 
-            if (effect != null) {
-                player.getWorld().spawnParticle(effect, player.getLocation(), 100);
-            }
-
-            if (plugin.getConfig().getBoolean("actions.send-message.enabled")) {
-                List<String> messages = plugin.getConfig().getStringList("actions.send-message.message");
+    private void sendActions(Player player) {
+        if (plugin.getConfig().getBoolean("actions.send-message.enabled")) {
+            List<String> messages = plugin.getConfig().getStringList("actions.send-message.message");
+            if (!messages.isEmpty()) {
                 player.sendMessage(MSG.color(String.join("\n", messages)));
             }
+        }
 
-            if (plugin.getConfig().getBoolean("actions.send-title.enabled")) {
+        if (plugin.getConfig().getBoolean("actions.send-title.enabled")) {
+            String title = plugin.getConfig().getString("actions.send-title.title", "");
+            String subtitle = plugin.getConfig().getString("actions.send-title.subtitle", "");
+
+            if (!title.isEmpty() || !subtitle.isEmpty()) {
                 player.sendTitle(
-                        Objects.requireNonNull(plugin.getConfig().getString("actions.send-title.title")).replace("&", "§"),
-                        Objects.requireNonNull(plugin.getConfig().getString("actions.send-title.subtitle")).replace("&", "§"),
-                        plugin.getConfig().getInt("actions.send-title.in"),
-                        plugin.getConfig().getInt("actions.send-title.stay"),
-                        plugin.getConfig().getInt("actions.send-title.out")
+                        title.replace("&", "§"),
+                        subtitle.replace("&", "§"),
+                        plugin.getConfig().getInt("actions.send-title.in", 10),
+                        plugin.getConfig().getInt("actions.send-title.stay", 40),
+                        plugin.getConfig().getInt("actions.send-title.out", 10)
                 );
             }
+        }
 
-            if (plugin.getConfig().getBoolean("vault.enabled")) {
-                econ.withdrawPlayer(player, plugin.getConfig().getInt("vault.use_cost"));
-                econ.depositPlayer(player, plugin.getConfig().getInt("vault.use_gain"));
-            }
+        if (plugin.getConfig().getBoolean("vault.enabled") && econ != null) {
+            econ.withdrawPlayer(player, plugin.getConfig().getInt("vault.use_cost", 0));
+            econ.depositPlayer(player, plugin.getConfig().getInt("vault.use_gain", 0));
         }
     }
 
     @EventHandler
     public void onPlayerDamage(EntityDamageEvent event) {
-        Entity entity = event.getEntity();
-        if (entity instanceof Player && entity.hasPermission("xpad.launch")) {
+        if (event.getEntity() instanceof Player player
+                && event.getCause() == EntityDamageEvent.DamageCause.FALL
+                && playerUsingPad.getOrDefault(player, false)) {
             event.setCancelled(true);
-        }
-    }
-
-    @EventHandler
-    public void onPlayerJoin(PlayerJoinEvent event) {
-        Player player = (Player) event.getPlayer();
-
-        int spigotID = 116150;
-
-        UpdateLogger updateLogger = new UpdateLogger(plugin, spigotID);
-        try {
-            if (updateLogger.isUpdateAvailable()) {
-                player.sendMessage(MSG.color(prefix + "&cThere is a new update of the plugin"));
-            }
-        } catch (Exception e) {
-            player.sendMessage(MSG.color(prefix + "&4&lError searching newer versions: " + e.getMessage()));
         }
     }
 

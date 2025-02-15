@@ -1,9 +1,9 @@
 package x.Entt.XPad.CMDs;
 
-import x.Entt.XPad.XPad;
+import x.Entt.XPad.XP;
 import x.Entt.XPad.Events.Events;
 import x.Entt.XPad.Utils.MSG;
-import static x.Entt.XPad.XPad.prefix;
+import static x.Entt.XPad.XP.prefix;
 
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -15,9 +15,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CMD implements CommandExecutor, TabCompleter {
-    private final XPad plugin;
+    private final XP plugin;
 
-    public CMD(XPad plugin) {
+    public CMD(XP plugin) {
         this.plugin = plugin;
     }
 
@@ -40,7 +40,7 @@ public class CMD implements CommandExecutor, TabCompleter {
 
         Player player = (Player) sender;
 
-        if (sender.hasPermission("xpad.commands")) {
+        if (sender.hasPermission("xpad.op")) {
             if (args.length >= 1) {
                 if (args[0].equalsIgnoreCase("reload")) {
                     plugin.reloadConfig();

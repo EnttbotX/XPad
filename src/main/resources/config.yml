@@ -7,13 +7,28 @@
 #      /__/ /\ __\    \|__|     \|__|\|__|\|_______|
 #     |__|/  \|__|        by Enttbot
 
-prefix: "&1[XPAD]"
+# Donate Me! im poor :(
+# https://paypal.me/Enttbot
+
+# Visit my web page:
+# enttbotx.github.io
+
+prefix: "&1[&eXPAD&1] "
 
 speed: 5
+# player-view (launches in the direction the player is facing) | single-direction (launches in a preset direction)
+direction: player-view
 effect: EXPLOSION_LARGE
 sound: ENTITY_BAT_TAKEOFF
 launch-plate: STONE_PRESSURE_PLATE
-bottom-block: REDSTONE_BLOCK
+bottom-block: REDSTONE_BLOCK # USE A BLOCK OR TYPE "ANY" FOR USE ANY BLOCK
+
+world-list:
+  enabled: true
+  list-mode: "whitelist" # Whitelist / Blacklist
+  worlds:
+    - "world1"
+    - "world2"
 
 vault:
   enabled: false
