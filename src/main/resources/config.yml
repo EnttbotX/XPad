@@ -5,23 +5,83 @@
 #        /     \/   \ \  \___|\ \  \ \  \ \  \_\\ \
 #       /  /\   \    \ \__\    \ \__\ \__\ \_______\
 #      /__/ /\ __\    \|__|     \|__|\|__|\|_______|
-#     |__|/  \|__|        by Enttbot
+#     |__|/  \|__|        by EnttbotX
 
 # Donate Me! im poor :(
-# https://paypal.me/Enttbot
+# ko-fi.com/enttbotx
 
-# Visit my web page:
+# My web page - Wiki can be found here:
 # enttbotx.github.io
 
-prefix: "&1[&eXPAD&1] "
+# don´t touch this ⬇️
+config-version: 1.4.0
 
-speed: 5
-# player-view (launches in the direction the player is facing) | single-direction (launches in a preset direction)
-direction: player-view
-effect: EXPLOSION_LARGE
-sound: ENTITY_BAT_TAKEOFF
-launch-plate: STONE_PRESSURE_PLATE
-bottom-block: REDSTONE_BLOCK # USE A BLOCK OR TYPE "ANY" FOR USE ANY BLOCK
+update-log:
+  enabled: true
+  permission: "xpad.updater"
+
+pads:
+  '1': # <- pad ID
+    speed: 5
+    direction: player-view
+    launch-plate: STONE_PRESSURE_PLATE
+    bottom-block: REDSTONE_BLOCK # ANY // BLOCK_NAME
+    sound: ENTITY_FIREWORK_ROCKET_LAUNCH
+    cooldown: 2 # <- It applies to the player who used it, not all players.
+    permission: "xpad.use.1" # permission to use the pad
+    actions: # made when use a pad
+      send-message:
+        enabled: false
+        message:
+          - "&3Launched!"
+
+      send-title:
+        enabled: false
+        title: "&cLaunched"
+        subtitle: "&fbye-bye"
+
+        in: 10
+        stay: 5
+        out: 10
+
+      execute-cmd:
+        enabled: false
+        execute:
+          - "eco give %player% 100"
+    trail:
+      enabled: true
+      type: "FLAME" # particle
+  '2':
+    speed: 12
+    direction: single-direction
+    vector: [20, 10] # yaw / pitch
+    launch-plate: STONE_PRESSURE_PLATE
+    bottom-block: ANY # ANY // BLOCK_NAME
+    sound: ENTITY_FIREWORK_ROCKET_LAUNCH
+    cooldown: 2
+    permission: "xpad.use.2"
+    actions: # made when use a pad
+      send-message:
+        enabled: false
+        message:
+          - "&3Launched!"
+
+      send-title:
+        enabled: false
+        title: "&cLaunched"
+        subtitle: "&fbye-bye"
+
+        in: 10
+        stay: 5
+        out: 10
+
+      execute-cmd:
+        enabled: false
+        execute:
+          - "eco give %player% 100"
+    trail:
+      enabled: true
+      type: "FLAME" # particle
 
 world-list:
   enabled: true
@@ -29,23 +89,3 @@ world-list:
   worlds:
     - "world1"
     - "world2"
-
-vault:
-  enabled: false
-  use_cost: 0
-  use_gain: 0
-
-actions:
-  send-message:
-    enabled: false
-    message:
-      - "&3Launched!"
-
-  send-title:
-    enabled: false
-    title: "&cLaunched"
-    subtitle: "&fbye-bye"
-
-    in: 10
-    stay: 5
-    out: 10

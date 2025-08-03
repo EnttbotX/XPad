@@ -7,75 +7,63 @@ import java.util.Objects;
 
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.TextComponent;
-import net.milkbowl.vault.economy.Economy;
 
 import org.bukkit.Bukkit;
-import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import x.Entt.XPad.CMDs.CMD;
 import x.Entt.XPad.Events.Events;
-import x.Entt.XPad.Events.OPEvents;
-import x.Entt.XPad.Utils.MSG;
-import x.Entt.XPad.Utils.Metrics;
-import x.Entt.XPad.Utils.Updater;
+import x.Entt.XPad.Utils.*;
 
 public class XP extends JavaPlugin{
     int bStatsID = 21579;
+    private FileHandler fh;
     private Metrics metrics;
     private Updater updater;
     public static String prefix;
-    public static Economy econ = null;
+    private ConfigUpdater confUpdater;
     private final String version = getDescription().getVersion();
 
     public void onEnable(){
         metrics = new Metrics(this, bStatsID);
-
-        if (getConfig().getString("prefix") != null) {
-            prefix = getConfig().getString("prefix");
-        } else {
-            prefix = "&1[XPAD]";
-        }
-
-        Bukkit.getConsoleSender().sendMessage
-                (MSG.color(prefix + "&av" + version + " &2Enabled!"));
-
-        if (getConfig().getBoolean("Vault.enabled") && !setupEconomy()) {
-            FileConfiguration config = getConfig();
-            getLogger().severe(MSG.color(prefix + "&cVault not found, deactivating it for the plugin"));
-            config.set("Vault.enabled", false);
-            return;
-        }
-
         updater = new Updater(this, 116150);
+        fh = new FileHandler(this);
+        cleanupPads();
+
+        confUpdater = new ConfigUpdater(this);
+        confUpdater.update();
+
+        MSGManager.init(this);
+        fh.saveDefaults();
+        fh.loadAllFiles();
+        prefix = fh.getMessages().getString("prefix", "&1[&eXPAD&1]&r ");
 
         logMetrics();
 
-        searchUpdates();
+        if(fh.getConfig().getBoolean("update-log.enabled")) {
+            searchUpdates();
+        }
 
         registerConfig();
         registerEvents();
         registerCommands();
+
+        Bukkit.getConsoleSender().sendMessage
+                (MSG.color(prefix + "&av" + version + " &2Enabled!"));
     }
 
     public void onDisable() {
+        metrics.shutdown();
+
         Bukkit.getConsoleSender().sendMessage
                 (MSG.color(prefix + "&av" + version + " &cDisabled"));
-
-        metrics.shutdown();
-    }
-
-    private void logToConsole(String message) {
-        Bukkit.getConsoleSender().sendMessage(MSG.color(message));
     }
 
     private void logMetrics() {
-        metrics.addCustomChart(new Metrics.SimplePie("vault_enabled", () -> String.valueOf(getConfig().getBoolean("vault.enabled", false))));
-
-        String launchPlate = getConfig().getString("launch-plate", "STONE_PRESSURE_PLATE");
-        String bottomBlock = getConfig().getString("bottom-block", "REDSTONE_BLOCK");
+        String launchPlate = getConfig().getString("launch-plate", "UNKNOWN");
+        String bottomBlock = getConfig().getString("bottom-block", "UNKNOWN");
         String combination = launchPlate + " + " + bottomBlock;
 
         metrics.addCustomChart(new Metrics.AdvancedPie("launcher_combinations", () -> {
@@ -83,17 +71,6 @@ public class XP extends JavaPlugin{
             combinations.put(combination, 1);
             return combinations;
         }));
-    }
-
-    private boolean setupEconomy() {
-        RegisteredServiceProvider<Economy> economyProvider = getServer().getServicesManager().getRegistration(net.milkbowl.vault.economy.Economy.class);
-        if (economyProvider != null) {
-            econ = (Economy) ((RegisteredServiceProvider<?>) economyProvider).getProvider();
-        } else {
-            Bukkit.getConsoleSender().sendMessage(MSG.color(prefix + "&cEconomyProvider is null"));
-        }
-
-        return (econ != null);
     }
 
     public void registerConfig() {
@@ -110,7 +87,6 @@ public class XP extends JavaPlugin{
 
     public void registerEvents() {
         getServer().getPluginManager().registerEvents(new Events(this), this);
-        getServer().getPluginManager().registerEvents(new OPEvents(this), this);
     }
 
     public void searchUpdates() {
@@ -122,19 +98,22 @@ public class XP extends JavaPlugin{
         String latestVersion = "unknown";
 
         try {
+            updater = new Updater(this, 116150);
             updateAvailable = updater.isUpdateAvailable();
             latestVersion = updater.getLatestVersion();
         } catch (Exception e) {
-            logToConsole("&cError checking for updates: " + e.getMessage());
+            Bukkit.getConsoleSender().sendMessage(MSG.color("&cError checking for updates: " + e.getMessage()));
         }
 
         if (updateAvailable) {
-            logToConsole("&2&l===========================================");
-            logToConsole("&6&lNEW VERSION AVAILABLE!");
-            logToConsole("&e&lCurrent Version: &f" + version);
-            logToConsole("&e&lLatest Version: &f" + latestVersion);
-            logToConsole("&e&lDownload it here: &f" + downloadUrl);
-            logToConsole("&2&l===========================================");
+            Bukkit.getConsoleSender().sendMessage("");
+            Bukkit.getConsoleSender().sendMessage(MSG.color("&2&l============= " + prefix + "&2&l============="));
+            Bukkit.getConsoleSender().sendMessage(MSG.color("&6&lNEW VERSION AVAILABLE!"));
+            Bukkit.getConsoleSender().sendMessage(MSG.color("&e&lCurrent Version: &f" + version));
+            Bukkit.getConsoleSender().sendMessage(MSG.color("&e&lLatest Version: &f" + latestVersion));
+            Bukkit.getConsoleSender().sendMessage(MSG.color("&e&lDownload it here: &f" + downloadUrl));
+            Bukkit.getConsoleSender().sendMessage(MSG.color("&2&l============= " + prefix + "&2&l============="));
+            Bukkit.getConsoleSender().sendMessage("");
 
             for (Player player : Bukkit.getOnlinePlayers()) {
                 if (player.hasPermission("xpad.op")) {
@@ -143,5 +122,21 @@ public class XP extends JavaPlugin{
                 }
             }
         }
+    }
+
+    public void cleanupPads() {
+        ConfigurationSection padsSection = this.getConfig().getConfigurationSection("pads");
+        if (padsSection != null) {
+            for (String key : padsSection.getKeys(false)) {
+                if (padsSection.get(key) == null) {
+                    this.getConfig().set("pads." + key, null);
+                }
+            }
+            this.saveConfig();
+        }
+    }
+
+    public FileHandler getFh() {
+        return fh;
     }
 }

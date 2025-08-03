@@ -1,0 +1,46 @@
+#       ___    ___ ________  ________  ________
+#      |\  \  /  /|\   __  \|\   __  \|\   ___ \
+#      \ \  \/  / | \  \|\  \ \  \|\  \ \  \_|\ \
+#       \ \    / / \ \   ____\ \   __  \ \  \ \\ \
+#        /     \/   \ \  \___|\ \  \ \  \ \  \_\\ \
+#       /  /\   \    \ \__\    \ \__\ \__\ \_______\
+#      /__/ /\ __\    \|__|     \|__|\|__|\|_______|
+#     |__|/  \|__|        by EnttbotX
+#                      ko-fi.com/enttbotx{
+
+# DO NOT REPLACE OR CHANGE VARIABLES LIKE $path$
+# YOU CAN MOVE THEM, BUT NOT DELETE THEM
+
+# You can use PlaceholderAPI placeholders in this :)
+
+# don´t touch this ⬇️
+config-version: 1.4.0
+
+prefix: "&1[&eXPAD&1]&r "
+
+messages:
+  invalid_material: "$prefix$ &cInvalid material at $path$. &7Using default: $def$" # Keep the variables (if you change anything they won't work)
+  invalid_particle: "$prefix$ &cInvalid particle at $path$. &7Using default: $def$"
+  invalid_sound: "$prefix$ &cInvalid sound at $path$: $name$"
+  no_permission: "$prefix$ &4You don´t have permissions to do that!"
+  reloaded: "$prefix$ &2Has been reloaded!"
+  path_not_found: "$prefix$ &4The path $path$ does not exists! &c&lUSE:&f &e/xpad list paths &7to see available paths"
+  invalid_value_format: "$prefix$ &4Invalid value format: $value$"
+  apply_edit: "$prefix$ &aSuccessfully updated &e$path$&a to &e$value$"
+  existent_pad: "$prefix$ &4The pad $pad$ already exists"
+  created_pad: "$prefix$ &aCreated new pad: &e$pad$"
+  created_template: "$prefix$ &aCreated &e$type$&a template pad: &e$pad$"
+  deleted_pad: "$prefix$ &aDeleted pad: &e$pad$"
+  pad_not_exist: "$prefix$ &cPad &e$pad$ &cdoes not exist!"
+  error_reading_pad: "$prefix$ &cError reading pad configuration"
+  source_pad_missing: "$prefix$ &cSource pad &e$from$ &cdoes not exist!"
+  dest_pad_exists: "$prefix$ &cDestination pad &e$to$ &calready exists!"
+  error_copying_pad: "$prefix$ &cError copying pad configuration"
+  copied_pad: "$prefix$ &aCopied pad &e$from$ &ato &e$to$"
+  unknown_template: "$prefix$ &cUnknown template: &e$type$"
+  unknown_list_type: "$prefix$ &cUnknown list type: &e$type$"
+  path_not_list: "$prefix$ &cPath is not a list: &e$path$"
+  added_to_list: "$prefix$ &aAdded &e$item$ &ato list at &e$path$"
+  removed_from_list: "$prefix$ &aRemoved &e$item$ &afrom list at &e$path$"
+  already_in_list: "$prefix$ &eItem already in list: &e$item$"
+  not_in_list: "$prefix$ &eItem not found in list: &e$item$"
