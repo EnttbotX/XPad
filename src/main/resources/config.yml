@@ -5,20 +5,17 @@
 #        /     \/   \ \  \___|\ \  \ \  \ \  \_\\ \
 #       /  /\   \    \ \__\    \ \__\ \__\ \_______\
 #      /__/ /\ __\    \|__|     \|__|\|__|\|_______|
-#     |__|/  \|__|        by EnttbotX
+#     |__|/  \|__|   ░█▀▄░█░█░░░█▀▀░█▀█░▀█▀░▀█▀░█▀▄░█▀█░▀█▀░█░█
+#                    ░█▀▄░░█░░░░█▀▀░█░█░░█░░░█░░█▀▄░█░█░░█░░▄▀▄
+#                    ░▀▀░░░▀░░░░▀▀▀░▀░▀░░▀░░░▀░░▀▀░░▀▀▀░░▀░░▀░▀
 
-# Donate Me! im poor :(
-# ko-fi.com/enttbotx
+# DO NOT TOUCH THIS
+config-version: 1.4.1
+# DO NOT TOUCH THIS
 
-# My web page - Wiki can be found here:
-# enttbotx.github.io
-
-# don´t touch this ⬇️
-config-version: 1.4.0
-
-update-log:
+updater:
   enabled: true
-  permission: "xpad.updater"
+  advert-permission: "xpad.admin"
 
 pads:
   '1': # <- pad ID

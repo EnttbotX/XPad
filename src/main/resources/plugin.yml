@@ -1,5 +1,5 @@
 main: x.Entt.XPad.XP
-version: 1.4.0
+version: 1.4.1
 name: XPad
 author: Enttbot
 api-version: "1.13"
